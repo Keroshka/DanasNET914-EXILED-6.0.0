@@ -1,6 +1,6 @@
 ﻿using Exiled.API.Features;
 using Exiled.Events.Handlers;
-using Exiled.Events.EventArgs.;
+using Exiled.Events.EventArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +10,9 @@ using Exiled.Events.EventArgs.Scp914;
 using MapGeneration.Distributors;
 using InventorySystem.Items.Pickups;
 using Exiled.API.Features.Items;
+using UnityEngine;
+using Exiled.API.Features.Pickups;
+using Item = Exiled.API.Features.Items.Item;
 
 namespace DanasNET914
 {
@@ -27,7 +30,7 @@ namespace DanasNET914
             if (ev.Item.Type == ItemType.Radio && ev.KnobSetting == Scp914.Scp914KnobSetting.Coarse && plugin.rng.Next(100) <= 50)
             {
                 ev.IsAllowed = false;
-                ev.Item.Destroy();
+                ev.Player.RemoveItem(ev.Item);
                 ev.Player.AddItem(ItemType.SCP1576);
             }
         }
@@ -37,9 +40,22 @@ namespace DanasNET914
             if (ev.Pickup.Type == ItemType.Radio && ev.KnobSetting == Scp914.Scp914KnobSetting.Coarse && plugin.rng.Next(100) <= 50)
             {
                 ev.IsAllowed = false;
-                ev.Pickup.Destroy();
-                ev.
+                UpgradeItem(ev.Pickup, ItemType.SCP1576, ev.OutputPosition);
             }
+        }
+
+        internal void UpgradeItem(Pickup oldItem, ItemType newItem, Vector3 pos)
+        {
+            if (newItem is not ItemType.None)
+            {
+                Item item = Item.Create(newItem);
+                if (oldItem is FirearmPickup oldFirearm && item is Firearm firearm)
+                    firearm.Ammo = oldFirearm.Ammo <= firearm.MaxAmmo ? oldFirearm.Ammo : firearm.MaxAmmo;
+
+                item.CreatePickup(pos);
+            }
+
+            oldItem.Destroy();
         }
     }
 }
